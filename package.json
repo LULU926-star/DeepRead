@@ -1,16 +1,16 @@
 {
-  "name": "deepread-mvp",
+  "name": "deepread-web",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "react": "^19.2.4",
-    "@google/genai": "^1.41.0",
     "react-dom": "^19.2.4",
     "lucide-react": "^0.563.0"
   },

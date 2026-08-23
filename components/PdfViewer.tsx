@@ -1,70 +1,86 @@
-import React, { useEffect, useState } from 'react';
-import { Search } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { AlertTriangle, ExternalLink, FileText, LocateFixed, X } from 'lucide-react';
+import type { CrossPaperCitation, Paper } from '../types';
+import { deepreadApi } from '../services/deepreadApi';
 
 interface PdfViewerProps {
-  fileUrl: string | null;
-  activeCitation: string | null;
+  sessionId: string | null;
+  paper: Paper | null;
+  citation: CrossPaperCitation | null;
+  onClose: () => void;
 }
 
-const PdfViewer: React.FC<PdfViewerProps> = ({ fileUrl, activeCitation }) => {
-  const [highlighting, setHighlighting] = useState(false);
+const PdfViewer: React.FC<PdfViewerProps> = ({ sessionId, paper, citation, onClose }) => {
+  const pdfUrl = useMemo(() => {
+    if (!sessionId || !paper) return '';
+    const page = citation?.paper_id === paper.paper_id && citation.page_index != null
+      ? citation.page_index + 1
+      : 1;
+    return `${deepreadApi.paperPdfUrl(sessionId, paper.paper_id)}#page=${page}&view=FitH`;
+  }, [citation, paper, sessionId]);
 
-  useEffect(() => {
-    if (activeCitation) {
-      setHighlighting(true);
-      // Simulate the "Find" and "Scroll" delay
-      const timer = setTimeout(() => {
-        setHighlighting(false);
-      }, 1500); // Flash duration
-      return () => clearTimeout(timer);
-    }
-  }, [activeCitation]);
-
-  if (!fileUrl) {
+  if (!paper || !sessionId) {
     return (
-      <div className="h-full w-full bg-gray-100 flex items-center justify-center text-gray-400">
-        <p>No document loaded</p>
-      </div>
+      <section className="pdf-pane pdf-pane--empty" aria-label="论文原文">
+        <FileText size={32} aria-hidden="true" />
+        <p>从论文库中选择一篇论文查看原文</p>
+      </section>
     );
   }
 
-  return (
-    <div className="h-full w-full bg-gray-200 flex flex-col relative">
-      {/* Floating Toolbar (Visual only for MVP) */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/90 text-white px-4 py-2 rounded-full shadow-lg z-10 flex gap-4 text-sm backdrop-blur-sm opacity-0 hover:opacity-100 transition-opacity duration-300">
-        <button className="hover:text-blue-300">Prev</button>
-        <span>Page 1 / 10</span>
-        <button className="hover:text-blue-300">Next</button>
-        <span className="border-l border-gray-600 mx-2"></span>
-        <button className="hover:text-blue-300">Fit</button>
-      </div>
+  const activeCitation = citation?.paper_id === paper.paper_id ? citation : null;
 
-      {/* Grounding/Search Overlay Effect */}
-      {highlighting && activeCitation && (
-        <div className="absolute top-10 right-10 bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-2 rounded shadow-xl z-50 animate-bounce flex items-center gap-2">
-            <Search size={16} />
-            <span className="text-xs font-bold">Locating:</span>
-            <span className="text-xs truncate max-w-[200px] italic">"{activeCitation.substring(0, 30)}..."</span>
+  return (
+    <section className="pdf-pane" aria-label={`${paper.filename} 原文`}>
+      <header className="pdf-pane__header">
+        <div className="pdf-pane__identity">
+          <span className="paper-id">{paper.paper_id}</span>
+          <div>
+            <h2 title={paper.filename}>{paper.metadata?.title || paper.filename}</h2>
+            <p>{paper.page_count ? `${paper.page_count} 页` : '页数读取中'}</p>
+          </div>
+        </div>
+        <div className="icon-actions">
+          {paper.pdf_available !== false && (
+            <a className="icon-button" href={pdfUrl} target="_blank" rel="noreferrer" title="在新窗口打开 PDF" aria-label="在新窗口打开 PDF">
+              <ExternalLink size={16} />
+            </a>
+          )}
+          <button className="icon-button pdf-pane__close" type="button" onClick={onClose} title="关闭原文" aria-label="关闭原文">
+            <X size={17} />
+          </button>
+        </div>
+      </header>
+
+      {activeCitation && (
+        <div className="citation-locator" key={activeCitation.chunk_id}>
+          <LocateFixed size={15} aria-hidden="true" />
+          <div>
+            <strong>{activeCitation.marker}</strong>
+            <span>
+              {activeCitation.section_title || activeCitation.section}
+              {activeCitation.page_index != null ? ` · 第 ${activeCitation.page_index + 1} 页` : ''}
+            </span>
+            {activeCitation.snippet && <p>{activeCitation.snippet}</p>}
+          </div>
         </div>
       )}
 
-      {/* 
-        Using an iframe for PDF rendering. 
-        Note: Programmatic text highlighting inside a cross-origin iframe (even local blob) is restricted by browser security.
-        For a production app, we would use 'react-pdf' to render Canvas/Text layers. 
-        For this MVP, we simulate the 'reaction' to the click via the overlay above.
-      */}
-      <iframe 
-        src={`${fileUrl}#toolbar=0&navpanes=0&scrollbar=0`} 
-        className="w-full h-full border-none bg-white" 
-        title="PDF Viewer"
-      />
-      
-      {/* Overlay to simulate fuzzy matching feedback if iframe blocks interaction */}
-      {highlighting && (
-         <div className="absolute inset-0 bg-yellow-500/10 pointer-events-none animate-pulse z-0 mix-blend-multiply" />
+      {paper.pdf_available === false ? (
+        <div className="pdf-unavailable" role="status">
+          <AlertTriangle size={28} aria-hidden="true" />
+          <h3>原始 PDF 不在托管目录中</h3>
+          <p>现有索引仍可用于检索。要恢复原文跳转，请删除这条论文记录后重新上传 PDF。</p>
+        </div>
+      ) : (
+        <iframe
+          key={`${paper.paper_id}:${activeCitation?.chunk_id || 'start'}`}
+          src={pdfUrl}
+          title={`${paper.filename} PDF`}
+          className="pdf-frame"
+        />
       )}
-    </div>
+    </section>
   );
 };
 
