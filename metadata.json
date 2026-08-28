@@ -1,6 +1,11 @@
 {
-  "name": "DeepRead MVP",
-  "description": "An AI-powered, split-screen academic reading tool for researchers featuring intent-based analysis and citation grounding.",
+  "name": "DeepRead",
+  "description": "An open-source, self-hosted research workspace for grounded paper reading: BPMRC structure, page-cited answers, methodology critique, and cross-paper synthesis.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": [
+    "structured paper analysis",
+    "citation-grounded chat",
+    "cross-paper review and comparison",
+    "share and export conversations"
+  ]
 }

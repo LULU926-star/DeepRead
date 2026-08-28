@@ -222,6 +222,12 @@ const App: React.FC = () => {
       updateUpload(item.id, { status: 'processing', progress: 0.25, jobId: result.job_id, paperId: result.paper_id, message: '等待解析与索引' });
       await waitForJob(result.job_id, item.id);
       updateUpload(item.id, { status: 'completed', progress: 1, message: '解析与索引完成' });
+      // Auto-open the PDF viewer for the newly uploaded paper so users can immediately
+      // verify the PDF they just submitted. Skip when the user already opened a paper
+      // manually in this session, to honour their active document.
+      setActivePaperId(result.paper_id);
+      setActiveCitation(null);
+      setPdfOpen(prev => prev || true);
     } catch (error) {
       updateUpload(item.id, { status: 'failed', message: apiErrorMessage(error) });
     }

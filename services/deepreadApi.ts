@@ -8,6 +8,9 @@ import type {
   ConversationTurnJob,
   CreateConversationInput,
   CreateConversationTurnInput,
+  CreateExportInput,
+  CreateShareInput,
+  ExportArtifact,
   IndexResult,
   MethodComparisonTable,
   Paper,
@@ -17,6 +20,8 @@ import type {
   Review,
   ReviewAngle,
   SessionInfo,
+  ShareCreateResult,
+  ShareLink,
   UpdateConversationInput,
   UploadResult,
 } from '../types';
@@ -280,6 +285,57 @@ export const deepreadApi = {
       `/sessions/${encodeURIComponent(sessionId)}/papers/${encodeURIComponent(paperId)}/similar?top_k=${topK}`,
       { signal },
     ),
+
+  createShareLink: (
+    sessionId: string,
+    conversationId: string,
+    input: CreateShareInput = {},
+    signal?: AbortSignal,
+  ) =>
+    request<ShareCreateResult>(
+      `/sessions/${encodeURIComponent(sessionId)}/conversations/${encodeURIComponent(conversationId)}/shares`,
+      { method: 'POST', body: jsonBody(input), signal },
+    ),
+
+  listShareLinks: (sessionId: string, conversationId: string, signal?: AbortSignal) =>
+    request<ShareLink[]>(
+      `/sessions/${encodeURIComponent(sessionId)}/conversations/${encodeURIComponent(conversationId)}/shares`,
+      { signal },
+    ),
+
+  revokeShareLink: (sessionId: string, conversationId: string, shareId: string) =>
+    request<void>(
+      `/sessions/${encodeURIComponent(sessionId)}/conversations/${encodeURIComponent(conversationId)}/shares/${encodeURIComponent(shareId)}`,
+      { method: 'DELETE' },
+    ),
+
+  createExport: (sessionId: string, input: CreateExportInput, signal?: AbortSignal) =>
+    request<ExportArtifact>(`/sessions/${encodeURIComponent(sessionId)}/exports`, {
+      method: 'POST',
+      body: jsonBody(input),
+      signal,
+    }),
+
+  listExports: (sessionId: string, includeExpired = false, signal?: AbortSignal) =>
+    request<ExportArtifact[]>(
+      `/sessions/${encodeURIComponent(sessionId)}/exports?include_expired=${includeExpired}`,
+      { signal },
+    ),
+
+  getExport: (sessionId: string, artifactId: string, signal?: AbortSignal) =>
+    request<ExportArtifact>(
+      `/sessions/${encodeURIComponent(sessionId)}/exports/${encodeURIComponent(artifactId)}`,
+      { signal },
+    ),
+
+  deleteExport: (sessionId: string, artifactId: string) =>
+    request<void>(
+      `/sessions/${encodeURIComponent(sessionId)}/exports/${encodeURIComponent(artifactId)}`,
+      { method: 'DELETE' },
+    ),
+
+  exportDownloadUrl: (sessionId: string, artifactId: string) =>
+    `${API_ROOT}/sessions/${encodeURIComponent(sessionId)}/exports/${encodeURIComponent(artifactId)}/download`,
 
   paperPdfUrl: (sessionId: string, paperId: string) =>
     `${API_ROOT}/sessions/${encodeURIComponent(sessionId)}/papers/${encodeURIComponent(paperId)}/pdf`,

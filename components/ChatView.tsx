@@ -17,6 +17,7 @@ import type {
   ProgressEvent,
 } from '../types';
 import ChatComposer from './ChatComposer';
+import ConversationShareExport from './ConversationShareExport';
 import ChatTurn from './ChatTurn';
 import SourceScopeDialog from './SourceScopeDialog';
 
@@ -427,6 +428,12 @@ const ChatView: React.FC<ChatViewProps> = ({
         <div className="chat-header__actions">
           {conversation && <span>{conversation.turn_count} 轮</span>}
           <button className="icon-button" type="button" onClick={onOpenHistory} title="对话历史" aria-label="打开对话历史"><History size={16} /></button>
+          <ConversationShareExport
+            sessionId={sessionId}
+            conversationId={conversation?.id || null}
+            tipTurnId={detail?.conversation.active_tip_turn_id ?? null}
+            disabled={conversation?.status === 'archived'}
+          />
           <button className="icon-button" type="button" onClick={onBeginNew} title="新对话" aria-label="新建对话"><Plus size={17} /></button>
         </div>
       </header>

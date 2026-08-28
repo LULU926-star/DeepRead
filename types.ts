@@ -228,6 +228,13 @@ export interface ShareLink {
   revoked_at?: string | null;
 }
 
+export interface CreateShareInput {
+  expires_in_days?: number;
+  include_sources?: boolean;
+  allow_markdown_download?: boolean;
+  tip_turn_id?: string | null;
+}
+
 export interface ShareCreateResult {
   share: ShareLink;
   token: string;
@@ -265,6 +272,15 @@ export interface ExportDocument {
   paper_scope: ExportPaper[];
   sections: ExportSection[];
   evidence: ExportEvidence[];
+}
+
+export interface CreateExportInput {
+  source_type: 'conversation' | 'review';
+  source_id: string;
+  format: 'markdown' | 'pdf';
+  tip_turn_id?: string | null;
+  include_sources?: boolean;
+  expires_in_hours?: number;
 }
 
 export interface ExportArtifact {
